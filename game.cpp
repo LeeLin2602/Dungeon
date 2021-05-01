@@ -1,0 +1,312 @@
+#include<game.h>
+
+void* keyboard_detect(void *events){
+    char c;
+    while(1){
+        c = getchar();
+        ((queue<pii>*)events)->push(make_pair(0, (int)c));
+    }
+    pthread_exit(NULL);
+}
+
+void game::clear_event(queue<pii> &events){
+    while(!events.empty()) events.pop();
+}
+
+
+inline void print_string(int i, int j, const char *y, string &x, const char *z = "", int _spc = 1){
+    mvprintw(i, j, y);
+    for(int k = 0; k < x.length(); k++) mvprintw(i, j + strlen(y) + k, "%c", ((x[k]=='_')&&_spc)?' ':x[k]);
+    mvprintw(i, j + strlen(y) + x.length(), z);
+}
+
+void game::pause(){
+    clear_event(events);
+    while(events.empty()) usleep(50); 
+    clear_event(events);
+}
+
+game::game(int r, int c) {
+    scr_row = r, scr_col = c;
+}
+void game::print_prompt(string x){
+    message = x;
+}
+
+void game::init(){
+    try {
+        initscr();
+        curs_set(0);
+        cbreak();
+        nonl();
+        intrflush(stdscr,FALSE);
+        keypad(stdscr,TRUE);
+        scrollok(stdscr, FALSE);
+        noecho();
+    } catch (...) {
+        throw gameError((gameErrorType)ncursesError);
+    }
+
+    initMap();
+    
+    if(pthread_create(&keyboard_detector, NULL, keyboard_detect, &events)){
+        throw gameError((gameErrorType)kbdtError);
+    }
+    
+
+    while(1){
+        struct winsize w;
+        ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+        mvprintw(5,5,"Terminal size: (%d, %d)", w.ws_row, w.ws_col);
+        mvprintw(6,5,"Minumum size: (%d, %d)", scr_row, scr_col);
+        refresh();
+        if(w.ws_row >= scr_row and w.ws_col >= scr_col) break;
+    }
+
+    resizeterm(scr_row, scr_col);
+
+    hello();
+}
+
+void game::hello(){
+
+    erase();
+    fstream gura;
+    gura.open("./Data/images/a.ansi", ios::in);
+    string tmp; int i = 1;
+    while(getline(gura, tmp)) print_string(i++, 1, "", tmp);
+    mvprintw(4, 5, "This is my wife <3");
+    refresh();
+    pause();
+
+    string name = "";
+    
+    clear_event(events); 
+    erase(), box(stdscr, '|', '-');
+    
+    fstream readImage; vector<string> lines; string perLine; 
+    readImage.open("./Data/images/dungeon.ansi");
+    if(readImage) while(getline(readImage, perLine)) lines.push_back(perLine);
+    readImage.close();
+
+    i = 4;
+    for(string perLine: lines) print_string(i++, 24, "", perLine, "", 0);
+
+    while(1){
+        mvprintw(20, 36, "Please tell me your name? ");
+        if(!events.empty()){
+            auto [typ, key] = events.front(); events.pop();
+            if(typ == 0 and key == 127 and !name.empty()) name = name.substr(0, name.length() - 1);
+            else if(!name.empty() and (key == 13 or key == 10)) break;
+            else if(name.length() < 16 and ((key == ' ' or key == '_' or key == '.') or ('a' <= key and key <= 'z') or ('A' <= key and key <= 'Z'))) name += (char)key;
+            else beep();
+            for(int i = 0; i < name.length(); i++) mvprintw(20, 62 + i, "%c", name[i]);
+        }
+        for(int i = name.length(); i < 16; i++) mvprintw(20, 62 + i, "_");
+        refresh();
+        usleep(50);
+    }
+
+    player = new warrior(name, 1000, 10, 10, 0);
+
+    erase(), box(stdscr, '|', '-'); i = 2;
+
+    i = 4;
+    for(string perLine: lines) print_string(i++, 24, "", perLine, "", 0);
+
+    print_string(20,36, "Hello, ", name, ", "); 
+    mvprintw(21,36, "Welcome to Dungeon!");
+    mvprintw(23,36, "(press any key to continue)");
+    refresh();
+    pause();
+}
+
+void game::show_info(vector<string> content){
+    for(int i = 14; i < 21; i++)
+        for(int j = 1; j <= 30; j++)
+            mvprintw(i, j, " ");
+
+    
+    int i = 14;
+    for(string x: content){
+        print_string(i++, 2, "", x);
+    }
+    // refresh();
+}
+
+void game::draw(int screen = 1){
+    // resizeterm(scr_row, scr_col);
+
+    erase();
+    const int stc = 32;
+    for(int i = 1; i < scr_row - 3; i++) mvprintw(i, stc - 1, "|");
+    for(int i = 1; i < stc - 1; i++) mvprintw(2, i, "-");
+
+    box(stdscr, '|', '-');
+    mvprintw(1, 3, "Dungeon Designed By CYCHEN");
+    mvprintw(3, 2, "Status: ");
+    print_string(5, 6, "Player: ", player->name);
+    mvprintw(7, 6, "HP : %d", player->get("hp"));
+    mvprintw(8, 6, "ATK: %d", player->get("atk"));
+    mvprintw(9, 6, "DFS: %d", player->get("dfs"));
+    mvprintw(10, 6, "Money: %d", player->get("money"));
+    for(int i = 1; i < stc - 1; i++) mvprintw(12, i, "-");
+
+    for(int i = 1; i < stc - 1; i++) mvprintw(21, i, "-");
+    mvprintw(22, 2, "Prompt: ");
+    // mvprintw(24, 6, "(W) Go Up");
+    // mvprintw(25, 6, "(S) Go Down");
+    // mvprintw(26, 6, "(A) Go Left");
+    // mvprintw(27, 6, "(D) Go Right");
+    mvprintw(24, 6, "(W, A, S, D) Move");
+    mvprintw(25, 6, "(E) View backpack");
+    mvprintw(29, 6, "(Q) Save/Load/Quit");
+    mvprintw(30, 6, "(R) Retreat");
+    mvprintw(31, 6, "(SPACE) Interactive");
+
+    for(int i = 1; i < stc - 1; i++) mvprintw(33, i, "-");
+
+    print_string(34, 2, "Cur. Location: ", cur->name);
+
+    // mvprintw(14, 4, "U");
+    // if(cur->adj[U]) mvprintw(13, 4, "O");
+    // if(cur->adj[D]) mvprintw(15, 4, "O");
+    // if(cur->adj[L]) mvprintw(14, 3, "O");
+    // if(cur->adj[R]) mvprintw(14, 5, "O");
+
+
+    // for(int i = 1; i < 7; i++) mvprintw(i, stc + 17, "]");
+    
+    if(screen){
+        for(int i = 0; i <= 17; i++){
+            for(int j = 1; j <= 5; j++) mvprintw(j, stc + i, "\\");
+            for(int j = 28; j <= scr_row - 3; j++) mvprintw(j, stc + i, "\\");
+        }
+
+        for(int i = 0; i <= 15; i++){
+            for(int j = 1; j <= 5; j++) mvprintw(j, scr_col - i - 2, "\\");
+            for(int j = 28; j <= scr_row - 4; j++) mvprintw(j, scr_col - i - 2, "\\");
+        }
+
+        if(cur->adj[L]){
+            for(int i = 0; i <= 17; i++) mvprintw(5, stc + i, "^");
+            for(int i = 0; i <= 17; i++) mvprintw(27, stc + i, "v");
+        } else {
+            for(int i = 5; i <= 27; i++) {
+                mvprintw(i, stc + 17, "|");
+                for(int j = 0; j < 17; j++)
+                    mvprintw(i, stc + j, "\\");
+            }
+        }
+
+        if(cur->adj[U]){
+            for(int i = 1; i <= 5; i++) mvprintw(i, stc + 17, "|");
+            for(int i = 1; i <= 5; i++) mvprintw(i, scr_col - 18, "|");
+        } else {
+            for(int i = stc + 17; i < 111; i++) {
+                mvprintw(5, i, "^");
+                for(int j = 1; j < 5; j++)
+                    mvprintw(j, i, "\\");
+            }
+        }
+
+        if(cur->adj[R]){
+            for(int i = 1; i <= 17; i++) mvprintw(5, scr_col - i - 1, "^");
+            for(int i = 1; i <= 17; i++) mvprintw(27, scr_col - i - 1, "v");
+        } else {
+            for(int i = 5; i <= 27; i++) {
+                mvprintw(i, scr_col - 18, "|");
+                for(int j = 1; j < 17; j++)
+                    mvprintw(i, scr_col - j - 1, "\\");
+            }
+        }
+
+        if(cur->adj[D]){
+            for(int i = 2; i <= 9; i++) mvprintw(scr_row - i - 1, stc + 17, "|");
+            for(int i = 2; i <= 9; i++) mvprintw(scr_row - i - 1, scr_col - 18, "|");
+        } else {
+            for(int i = stc + 17; i < 111; i++) {
+                mvprintw(27, i, "v");
+                for(int j = 2; j <= 9; j++)
+                    mvprintw(scr_row - j - 1, i, "\\");
+            }
+        }
+        
+        if(cur->obj != nullptr and cur->obj->valid and cur->obj->image.size() > 0){
+            int i = 6;
+            for(string x: cur->obj->image){
+                print_string(i++, stc + 21, "", x, "",  0);
+            }
+        } 
+
+        if(cur->obj != nullptr and cur->obj->valid) show_info(cur->obj->render());
+        if(cur->obj == nullptr or !cur->obj->valid) mvprintw(14, 2, "Empty Room");
+
+    }
+
+    for(int i = 1; i < scr_col - 1; i++) mvprintw(35, i, "-");
+    print_string(36, 2, "", message);
+
+    if(screen) refresh();
+
+}
+
+void game::viewBag(int cur){
+    draw(0);
+    for(int i = cur - cur % 20; i < player->bag.size() and i < cur - cur % 20 + 20; i ++){
+        print_string(10 + i, 64, i == cur?">":" ", player->bag[i].name, (player->get("eq" + to_string(player->bag[i].prop_type)) == Hash(player->bag[i].name))?"(Equiped)":"");
+    }
+    // refresh();
+}
+
+string game::save(){
+    string result;
+    result += player->name + "\n";
+    result += to_string(player->val.size()) + "\n";
+    for(auto [k, v]: player->val) result += k + " " + to_string(v) + "\n";
+    // result += "0\n";
+    result += to_string(player->bag.size()) + "\n";
+    for(auto k: player->bag) result += to_string(k.index) + "\n";
+    result += to_string(gameMap.size()) + "\n";
+    for(auto &r: gameMap) 
+        if(r.obj) result += r.obj->save() + "\n";
+        else result += "0\n";
+    result += to_string(cur->index) + "\n";
+    return result;
+}
+
+void game::read(string input){
+    stringstream s(input);
+    s >> player->name;
+    int n; s >> n;
+    player->val.clear();
+    player->bag.clear();
+    for(int i = 0; i < n; i++){
+        string k; int v;
+        s >> k >> v;
+        player->val[k] = v;
+    }
+    s >> n;
+    for(int i = 0; i < n; i++){
+        int id; s >> id;
+        props*item = new props();
+        memcpy(item, gameProps[id], sizeof(props));
+        player->bag.push_back(*item);
+    }
+    s >> n;
+    string x; getline(s, x);  // clear \n
+    for(int i = 0; i < n; i++){
+        string x; getline(s, x);
+        if(gameMap[i].obj) gameMap[i].obj->read(x);
+    }
+    s >> n;
+    cur = &gameMap[n];
+}
+
+void game::quit(){
+
+
+    endwin();
+    system("stty cooked");
+    exit(0);
+}
