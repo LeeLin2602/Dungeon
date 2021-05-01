@@ -24,11 +24,7 @@ using namespace std;
 
 typedef pair<int, int> pii;
 
-enum gameErrorType{
-    kbdtError = 1,
-    ncursesError = 2,
-    gameDataError = 3
-};
+enum gameErrorType{ kbdtError = 1, ncursesError = 2, gameDataError = 3 };
 
 struct gameError: public exception {
     gameErrorType errorType;
@@ -45,7 +41,6 @@ private:
     pthread_t keyboard_detector;
     int scr_row, scr_col;
     const int stc = 32;
-
     string message;
     grapher Grapher;
     vector<room> gameMap;
@@ -56,25 +51,19 @@ public:
     queue<pii> events;
     room* cur;
     warrior* player;
-
     game(int r, int c): scr_row(r), scr_col(c) {}
-
     // FLOW CONTROL
     void init();
     void quit();
     void pause();
-
     // RECORD
     string save();
     void load(string input);
-
     // GRAPHIC
     void draw(int info = 1, int prompt = 1, int main = 1, int doViewBag = -1, int doRefresh = 1);
     void print_prompt(string x);
     void show_info(vector<string> content);
-
 private:
-
     inline void g_split();
     inline void g_status();
     inline void g_info();
