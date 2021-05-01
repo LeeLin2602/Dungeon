@@ -119,7 +119,7 @@ void npc::trigger(void *Game){
 	render.push_back("(Q) Quit");
 	
 	while(1){
-		G->draw(0); 
+		G->draw(1, 1, 0, -1, 0); 
 		int i = 10;
 		for(string x: render){
 			int j = 40;
@@ -145,5 +145,6 @@ void npc::trigger(void *Game){
 			} 
 			if (typ == 0 and tolower(key) == 'q') return;
 		}
+        usleep(50);
 	}
 }

@@ -1,8 +1,8 @@
 #pragma once
 #include<string>
-#include<obj.h>
 #include<map>
 #include<set>
+#include<obj.h>
 
 using namespace std;
 
@@ -22,16 +22,7 @@ public:
 		val["money"] = mn;
 	}
 
-	void add(string key, int v){
-		val[key] += v;
-	}
-
-	void mod(string key, int v){
-		val[key] = v;
-	}
-
-	int get(string key){
-		return val[key];
-	}
-
+	void add(string key, int v){ val[key] += v; }
+	void mod(string key, int v){ val[key] = v; }
+	int get(string key){ return val[key]; }
 };

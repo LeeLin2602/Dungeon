@@ -5,6 +5,7 @@ void game::initMap(){
     fstream gameMapFile, gameMonsterFile, gameItemFile, gameNPCFile;
 
     gameNPCFile.open("./Data/npcs", ios::in);
+    
     if(!gameNPCFile) {
         throw gameError((gameErrorType)gameDataError);
     } else {
@@ -24,12 +25,7 @@ void game::initMap(){
             } 
 
             gameNPC.push_back(new npc(name, script, cmd, nb));
-
-            fstream readImage; string perLine;
-            readImage.open("./Data/images/npcs/" + to_string(i + 1) + ".ansi", ios::in);
-            if(!readImage) readImage.open("./Data/images/npcs/0.ansi");
-            while(getline(readImage, perLine)) gameNPC[i]->image.push_back(perLine);
-            readImage.close();
+            gameNPC[i]->image = readFile("./Data/images/npcs/" + to_string(i + 1) + ".ansi", "./Data/images/npcs/0.ansi");
         }
     }
 
@@ -48,11 +44,7 @@ void game::initMap(){
             } 
             gameProps.push_back(new props(name, cmd, ptp, i));
 
-            fstream readImage; string perLine;
-            readImage.open("./Data/images/items/" + to_string(i + 1) + ".ansi", ios::in);
-            if(!readImage) readImage.open("./Data/images/items/0.ansi");
-            while(getline(readImage, perLine)) beep(), gameProps[i]->image.push_back(perLine);
-            readImage.close();
+            gameProps[i]->image = readFile("./Data/images/items/" + to_string(i + 1) + ".ansi", "./Data/images/items/0.ansi");
         }
     }
 
@@ -69,11 +61,7 @@ void game::initMap(){
             string n; int h, a, d, r; gameMonsterFile >> n >> h >> a >> d >> r;
             gameMonsters.push_back(new monster(n, h, a, d, r));
 
-            fstream readImage; string perLine;
-            readImage.open("./Data/images/" + to_string(i + 1) + ".ansi", ios::in);
-            if(!readImage) readImage.open("./Data/images/0.ansi");
-            while(getline(readImage, perLine)) gameMonsters[i]->image.push_back(perLine);
-            readImage.close();
+            gameMonsters[i]->image = readFile("./Data/images/" + to_string(i + 1) + ".ansi", "./Data/images/0.ansi");
         }
 
     }
@@ -97,6 +85,7 @@ void game::initMap(){
             if(d >= 0) gameMap[i].adj[D] = &gameMap[d], gameMap[d].adj[U] = &gameMap[i];
             if(l >= 0) gameMap[i].adj[L] = &gameMap[l], gameMap[l].adj[R] = &gameMap[i];
             if(r >= 0) gameMap[i].adj[R] = &gameMap[r], gameMap[r].adj[L] = &gameMap[i];
+
             if(tp == 1){
                 int mtp; gameMapFile >> mtp;
                 gameMap[i].obj = new monster();

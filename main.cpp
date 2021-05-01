@@ -1,9 +1,11 @@
 #include<ncurses.h>
+
 #include<vector>
 #include<utility>
-#include<game.h>
 #include<iostream>
 #include<iomanip>
+
+#include<game.h>
 
 #define fst first
 #define scd second
@@ -11,6 +13,17 @@
 using namespace std;
 
 typedef pair<int, int> pii;
+
+enum MODE{
+    NormalMode, LeavingMode, QuitingMode, SavingMode, LoadingMode, ViewingBagMode, BreakingMode
+};
+
+vector<string> Leaving = {"Save/Load/Quit:", "", "(S) Save", "(L) Load", "(Q) Quit", "(C) Continue"};
+vector<string> Quiting = {"Do you really want to leave?", "", "(Y) Leave", "(N) Cancel", "", ""};
+vector<string> Saving = {"Save to?", "", "", "", "", "(C) Cancel"};
+vector<string> Loading = {"Load from?", "", "", "", "", "(C) Cancel"};
+vector<string> ViewingBag = {"View backpack:", "", "(W) Scroll up", "(S) Scroll down", "(SPACE) Use/Equip/Unload", "(Q) Quit"};
+
 
 int main() {
 
@@ -33,67 +46,55 @@ int main() {
         exit(e.errorType);
     }
 
-    Game.player->mod("last", -1);
-    int INPUT_MODE = 0; // normal
-
-    vector<string> Leaving = {"Save/Load/Quit:", "", "(S) Save", "(L) Load", "(Q) Quit", "(C) Continue"};
-    vector<string> Quiting = {"Do you really want to leave?", "", "(Y) Leave", "(N) Cancel", "", ""};
-    vector<string> Saving = {"Save to?", "", "", "", "", "(C) Cancel"};
-    vector<string> Reading = {"Load from?", "", "", "", "", "(C) Cancel"};
-    vector<string> ViewingBag = {"View backpack:", "", "(W) Scroll up", "(S) Scroll down", "(SPACE) Use/Equip/Unload", "(Q) Quit"};
-    
+    MODE INPUT_MODE = NormalMode;
 
     while(1){
         int &last = Game.player->val["last"];
-        if(INPUT_MODE == 0){
-            Game.draw(1);
+
+        if(INPUT_MODE == NormalMode){
+            Game.draw(1, 1, 1);
             while(!Game.events.empty()){
                 Game.print_prompt("");
                 auto [typ, key] = Game.events.front(); Game.events.pop();
-                // cout << Game.cur->obj << endl;
-                if(Game.cur->obj == nullptr or !Game.cur->obj->valid or Game.cur->obj->type != 1){
-                    if(typ == 0 and tolower(key) == 'w' and Game.cur->adj[U]) Game.cur = Game.cur->adj[U], last = D;
-                    if(typ == 0 and tolower(key) == 's' and Game.cur->adj[D]) Game.cur = Game.cur->adj[D], last = U;
-                    if(typ == 0 and tolower(key) == 'a' and Game.cur->adj[L]) Game.cur = Game.cur->adj[L], last = R;
-                    if(typ == 0 and tolower(key) == 'd' and Game.cur->adj[R]) Game.cur = Game.cur->adj[R], last = L;
-                } else {
-                    Game.print_prompt("There is monster in this room. You cannot pass by. Press (R) to retreat.");
+
+                if(typ == 0){
+                    if(Game.cur->obj == nullptr or !Game.cur->obj->valid or Game.cur->obj->type != 1){
+                        if(tolower(key) == 'w' and Game.cur->adj[U]) Game.cur = Game.cur->adj[U], last = D;
+                        if(tolower(key) == 's' and Game.cur->adj[D]) Game.cur = Game.cur->adj[D], last = U;
+                        if(tolower(key) == 'a' and Game.cur->adj[L]) Game.cur = Game.cur->adj[L], last = R;
+                        if(tolower(key) == 'd' and Game.cur->adj[R]) Game.cur = Game.cur->adj[R], last = L;
+                    } else {
+                        Game.print_prompt("There is monster in this room. You cannot pass by. Press (R) to retreat.");
+                    }
+                    if(key == ' '){
+                        if(Game.cur->obj != nullptr and Game.cur->obj->valid) Game.cur->obj->trigger(&Game);
+                        else Game.print_prompt("Nothing to interactive here.");
+                    }
+                    if(tolower(key) == 'q') INPUT_MODE = LeavingMode;
+                    if(tolower(key) == 'e') INPUT_MODE = ViewingBagMode;
+                    if(tolower(key) == 'r' and last != -1) Game.cur = Game.cur->adj[last], last = -1, Game.print_prompt("You returned to last room.");
+                
                 }
-                if(typ == 0 and tolower(key) == 'e') INPUT_MODE = 5;
-                if(typ == 0 and tolower(key) == 'r' and last != -1) Game.cur = Game.cur->adj[last], last = -1, Game.print_prompt("You returned to last room.");
-                if(typ == 0 and key == ' ' and Game.cur->obj != nullptr and Game.cur->obj->valid) {
-                    Game.cur->obj->trigger(&Game);
-                } else if(typ == 0 and key == ' ') {
-                    Game.print_prompt("Nothing to interactive here.");
-                }
-                if(typ == 0 and tolower(key) == 'q') INPUT_MODE = 1;
             }
-            // std::stringstream ss; ss << Game.cur->obj;
-            // string x; ss >> x; Game.print_prompt(x); 
             if(Game.player->get("hp") <= 0) Game.print_prompt("You are defeated! ");
-        } else if(INPUT_MODE == 1){
-            Game.show_info(Leaving); refresh();
+        } else if(INPUT_MODE == LeavingMode){
+            Game.draw(0, 1, 1, -1, 0); Game.show_info(Leaving); refresh();
             while(!Game.events.empty()){
                 auto [typ, key] = Game.events.front(); Game.events.pop();
-                if(typ == 0 and tolower(key) == 's') INPUT_MODE = 3;
-                if(typ == 0 and tolower(key) == 'l') INPUT_MODE = 4;
-                if(typ == 0 and tolower(key) == 'q') INPUT_MODE = 2;
-                if(typ == 0 and tolower(key) == 'c') {
-                    INPUT_MODE = 0;
-                    break;
-                }
+                if(tolower(key) == 's') INPUT_MODE = SavingMode;
+                if(tolower(key) == 'l') INPUT_MODE = LoadingMode;
+                if(tolower(key) == 'q') INPUT_MODE = QuitingMode;
+                if(tolower(key) == 'c') INPUT_MODE = NormalMode;
             }
-        } else if(INPUT_MODE == 2){
+        } else if(INPUT_MODE == QuitingMode){
+            Game.draw(0, 1, 1, -1, 0);
             Game.show_info(Quiting); refresh();
             while(!Game.events.empty()){
                 auto [typ, key] = Game.events.front(); Game.events.pop();
-                if(typ == 0 and tolower(key) == 'y') INPUT_MODE = 10;
-                if(typ == 0 and tolower(key) == 'n') {
-                    INPUT_MODE = 0;
-                    break;
-                }
+                if(typ == 0 and tolower(key) == 'y') INPUT_MODE = BreakingMode;
+                if(typ == 0 and tolower(key) == 'n') INPUT_MODE = NormalMode;
             }
-        } else if(INPUT_MODE == 3){
+        } else if(INPUT_MODE == SavingMode){
             if(Saving[1] == ""){
                 for(int i = 1; i <= 4; i++){
                     fstream rec, add;
@@ -111,8 +112,9 @@ int main() {
                     rec.close();
                 }
             }
+            Game.draw(0, 1, 1, -1, 0);
             Game.show_info(Saving); refresh();
-            Game.save();
+
             while(!Game.events.empty()){
                 auto [typ, key] = Game.events.front(); Game.events.pop();
                 if(typ == 0 and '1' <= key and key <= '4') {
@@ -135,18 +137,18 @@ int main() {
                     rec.write(nowtime.c_str(), nowtime.size());
                     rec.close();
                     Saving[1] = "";
-                    INPUT_MODE = 0;
+                    INPUT_MODE = NormalMode;
                     Game.print_prompt("Save record successfully.");
                     break;
                 }
                 if(typ == 0 and tolower(key) == 'c') {
-                    INPUT_MODE = 0;
+                    INPUT_MODE = NormalMode;
                     Saving[1] = "";
                     break;
                 }
             }
-        } else if(INPUT_MODE == 4){
-            if(Reading[1] == ""){
+        } else if(INPUT_MODE == LoadingMode){
+            if(Loading[1] == ""){
                 for(int i = 1; i <= 4; i++){
                     fstream rec, add;
                     string res;
@@ -159,12 +161,13 @@ int main() {
                         getline(rec, res);
                         res = res!=""?res:"Empty Record";
                     }
-                    Reading[i] = "(" + to_string(i) +  ") " + res;
+                    Loading[i] = "(" + to_string(i) +  ") " + res;
                     rec.close();
                 }
             }    
-            Game.show_info(Reading); refresh();
-            Game.save();
+            Game.draw(0, 1, 1, -1, 0);
+            Game.show_info(Loading); refresh();
+
             while(!Game.events.empty()){
                 auto [typ, key] = Game.events.front(); Game.events.pop();
                 if(typ == 0 and '1' <= key and key <= '4') {
@@ -177,53 +180,49 @@ int main() {
                     string res, perLine;
                     if(!rec){
                         Game.print_prompt("Unable to Load record.");
-                        INPUT_MODE = 0;
-                        Reading[1] = "";
+                        INPUT_MODE = NormalMode;
+                        Loading[1] = "";
                         break;
                     } else {
                         while(getline(rec, perLine)) res += perLine + "\n";
-                        Game.read(res);
+                        Game.load(res);
                         Game.print_prompt("Load record successfully");
                         rec.close();
                     }
-                    Reading[1] = "";
-                    INPUT_MODE = 0;
+                    Loading[1] = "";
+                    INPUT_MODE = NormalMode;
                     break;
                 }
                 if(typ == 0 and tolower(key) == 'c') {
-                    INPUT_MODE = 0;
-                    Reading[1] = "";
+                    INPUT_MODE = NormalMode;
+                    Loading[1] = "";
                     break;
                 }
             }        
-        } else if(INPUT_MODE == 5){
+        } else if(INPUT_MODE == ViewingBagMode){
             static int cur = 0;
-            // Game.draw(0);
-            Game.viewBag(cur);
-            Game.show_info(ViewingBag); refresh();
+            Game.draw(0, 1, 0, cur, 0);
+            Game.show_info(ViewingBag);
+            refresh();
 
             while(!Game.events.empty()){
                 auto [typ, key] = Game.events.front(); Game.events.pop();
-                // Game.print_prompt(to_string((int)Game.player->bag.size()) + " " + to_string(cur) + " " + (char)key);
-                if(typ == 0 and tolower(key) == 'w') cur = max(cur - 1, 0);
-                else if(typ == 0 and tolower(key) == 's') cur = min(cur + 1, (int)Game.player->bag.size() - 1);
-                else if(typ == 0 and key == ' ' and Game.player->bag.size() != 0) {
-                    Game.player->bag[cur].use(&Game);
-                    if(!Game.player->bag[cur].valid) Game.player->bag.erase(Game.player->bag.begin() + cur);
-                } else if(typ == 0 and tolower(key) == 'q') {
-                    INPUT_MODE = 0;
-                    break;
-                } else beep(); 
+                if(typ == 0){
+                         if(tolower(key) == 'w') cur = max(cur - 1, 0);
+                    else if(tolower(key) == 's') cur = min(cur + 1, (int)Game.player->bag.size() - 1);
+                    else if(tolower(key) == 'q') INPUT_MODE = NormalMode;
+                    else if(key == ' ' and Game.player->bag.size() != 0) { Game.player->bag[cur].use(&Game); if(!Game.player->bag[cur].valid) Game.player->bag.erase(Game.player->bag.begin() + cur); cur = min(cur, (int)Game.player->bag.size() - 1);}
+                    else beep(); 
+                }
+
             }
-        } else if(INPUT_MODE == 10){
+        } else if(INPUT_MODE == BreakingMode){
             break;
         }
         
         usleep(50);
     }
-    // erase();
 
-    // printw("%d", Game.logs.size());
     Game.quit();
 }
 
