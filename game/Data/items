@@ -1,0 +1,7 @@
+3
+Rusty_Sword 1 1
+atk += 10
+Rusty_Shield 2 1
+dfs += 10
+Better_Sword 1 1
+atk += 15
