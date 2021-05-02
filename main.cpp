@@ -59,7 +59,7 @@ int main() {
                 }
             }
             if(Game.player->get("isWin") == 1) Game.print_prompt("Congruatulation! You win. (Press any key to quit)"), INPUT_MODE = BreakingMode;
-            if(Game.player->get("hp") <= 0) Game.print_prompt("You are defeated! (Press any key to quit)"), INPUT_MODE = BreakingMode;
+            if(Game.player->get("hp") <= 0 or Game.player->get("isLoss") == 1) Game.print_prompt("You are defeated! (Press any key to quit)"), INPUT_MODE = BreakingMode;
         } else if(INPUT_MODE == LeavingMode){
             Game.draw(0, 1, 1, -1, 0); Game.show_info(Leaving); refresh();
             while(!Game.events.empty()){
