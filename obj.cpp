@@ -30,7 +30,7 @@ void monster::trigger(void *Game = nullptr){
 	int pdamage = max(pa - dfs, 1), mdamage = max(atk - pd, 1);
 	int thp = hp, round = 0;
 	while(1){
-		int&last = ((game*)Game)->player->val["last"];
+		int&last = ((game*)Game)->player->getref("last");
 
         if(round == 1) thp -= pdamage;
         else if(round == 3) ((game*)Game)->player->add("hp", -mdamage);

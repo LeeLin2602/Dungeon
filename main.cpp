@@ -34,7 +34,7 @@ int main() {
     MODE INPUT_MODE = NormalMode;
 
     while(1) { 
-        int &last = Game.player->val["last"];
+        int &last = Game.player->getref("last");
         if(INPUT_MODE == NormalMode){
             Game.draw(1, 1, 1);
             while(!Game.events.empty()){
