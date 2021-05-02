@@ -53,4 +53,6 @@ public:
 	npc(string n, string sc, vector<string> cm, vector<int> nb){ name = n, script = sc, commodity = cm, number = nb, valid = 1, type = 3;}
 	vector<string> render();
 	void trigger(void *Game);
+	string save();
+	void read(string input);
 };

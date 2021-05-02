@@ -141,6 +141,18 @@ vector<string> npc::render(){
 	return render;
 }
 
+string npc::save(){
+	string res = "";
+	res += to_string(number.size()) + " ";
+	for(int i: number) res += to_string(i) + " ";
+	return res;
+}
+
+void npc::read(string input){
+	stringstream s(input);
+	int n; s >> n; for(int i = 0; i < n; i++) s >> number[i];
+}
+
 void npc::trigger(void *Game){
 	game *G = (game*) Game;
 	vector<string> render;
@@ -168,7 +180,10 @@ void npc::trigger(void *Game){
 		while(!G->events.empty()) {
 			auto [typ, key] = G->events.front(); G->events.pop();
 			if(typ == 0 and '0' <= key and key <= '9' and key - '0' < number.size()){
-				if(!(number[key - '0'] == -1 or number[key - '0'] > 0)) continue;
+				if(!(number[key - '0'] == -1 or number[key - '0'] > 0)) {
+					G->print_prompt("Sold out.");
+					continue;
+				}
 				stringstream s(commodity[key - '0']);
 				string a, b, d, e, g, h; int c, f, i;
 				s >> a >> b >> c >> d >> e >> f >> g; for(char i: g) h += (i == '_')?' ':i;
