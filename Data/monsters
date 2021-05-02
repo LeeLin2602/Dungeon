@@ -1,3 +1,4 @@
-2
-small_slime 30 13 0 5
-big_slime 50 16 2 10
+3
+1 small_slime 30 13 0 5 0
+2 big_slime 50 16 2 10 0
+2 you_will_die 50 3000 3000 3000 0

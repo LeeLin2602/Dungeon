@@ -1,4 +1,5 @@
 1
-Doctor I_can_heal_you_if_you_pay_me_5_dollars 1
--1
+Doctor I_can_heal_you_if_you_pay_me_5_dollars 2
+-1 -1
 val money 5 val hp 100
+val money 5 val isWin 1 Pay_5_dollars_to_win_the_game. 1

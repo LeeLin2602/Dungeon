@@ -46,7 +46,7 @@ int main() {
                         if(tolower(key) == 's' and Game.cur->adj[D]) Game.cur = Game.cur->adj[D], last = U;
                         if(tolower(key) == 'a' and Game.cur->adj[L]) Game.cur = Game.cur->adj[L], last = R;
                         if(tolower(key) == 'd' and Game.cur->adj[R]) Game.cur = Game.cur->adj[R], last = L;
-                    } else {
+                    } else if(tolower(key) == 'd' or tolower(key) == 'w' or tolower(key) == 's' or tolower(key) == 'a') {
                         Game.print_prompt("There is monster in this room. You cannot pass by. Press (R) to retreat.");
                     }
                     if(key == ' '){
@@ -58,7 +58,8 @@ int main() {
                     if(tolower(key) == 'r' and last != -1) Game.cur = Game.cur->adj[last], last = -1, Game.print_prompt("You returned to last room.");
                 }
             }
-            if(Game.player->get("hp") <= 0) Game.print_prompt("You are defeated! ");
+            if(Game.player->get("isWin") == 1) Game.print_prompt("Congruatulation! You win. (Press any key to quit)"), INPUT_MODE = BreakingMode;
+            if(Game.player->get("hp") <= 0) Game.print_prompt("You are defeated! (Press any key to quit)"), INPUT_MODE = BreakingMode;
         } else if(INPUT_MODE == LeavingMode){
             Game.draw(0, 1, 1, -1, 0); Game.show_info(Leaving); refresh();
             while(!Game.events.empty()){
@@ -69,8 +70,7 @@ int main() {
                 if(tolower(key) == 'c') INPUT_MODE = NormalMode;
             }
         } else if(INPUT_MODE == QuitingMode){
-            Game.draw(0, 1, 1, -1, 0);
-            Game.show_info(Quiting); refresh();
+            Game.draw(0, 1, 1, -1, 0); Game.show_info(Quiting); refresh();
             while(!Game.events.empty()){
                 auto [typ, key] = Game.events.front(); Game.events.pop();
                 if(typ == 0 and tolower(key) == 'y') INPUT_MODE = BreakingMode;
@@ -87,8 +87,7 @@ int main() {
                     rec.close();
                 }
             }
-            Game.draw(0, 1, 1, -1, 0);
-            Game.show_info(Saving); refresh();
+            Game.draw(0, 1, 1, -1, 0); Game.show_info(Saving); refresh();
 
             while(!Game.events.empty()){
                 auto [typ, key] = Game.events.front(); Game.events.pop();
@@ -163,8 +162,10 @@ int main() {
                 }
             }
         } else if(INPUT_MODE == BreakingMode) break;
-        usleep(50);
+        usleep(50000);
     }
+    Game.draw(1, 1, 1);
+    Game.pause();
     Game.quit();
 }
 

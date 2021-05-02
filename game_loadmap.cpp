@@ -1,4 +1,7 @@
 #include<game.h>
+#include<iostream>
+using namespace std;
+
 
 void game::initMap(){
     fstream gameMapFile, gameMonsterFile, gameItemFile, gameNPCFile; int n;
@@ -24,14 +27,12 @@ void game::initMap(){
         gameProps.push_back(new props(name, cmd, ptp, i));
         gameProps[i]->image = readFile("./Data/images/items/" + to_string(i + 1) + ".ansi", "./Data/images/items/0.ansi");
     }
-
     gameMonsterFile >> n;
     for(int i = 0; i < n; i++){
-        string n; int h, a, d, r; gameMonsterFile >> n >> h >> a >> d >> r;
-        gameMonsters.push_back(new monster(n, h, a, d, r));
-        gameMonsters[i]->image = readFile("./Data/images/" + to_string(i + 1) + ".ansi", "./Data/images/0.ansi");
+        string n, p; int h, a, d, r, sc; gameMonsterFile >> p >> n >> h >> a >> d >> r >> sc;
+        gameMonsters.push_back(new monster(n, h, a, d, r, sc));
+        gameMonsters[i]->image = readFile("./Data/images/" + p + ".ansi", "./Data/images/0.ansi");
     }
-
     gameMapFile >> n;
     gameMap.resize(n);
     cur = &gameMap[0];

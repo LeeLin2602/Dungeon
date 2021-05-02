@@ -55,7 +55,7 @@ void game::hello(){
             for(int i = 0; i < name.length(); i++) mvprintw(20, 62 + i, "%c", name[i]);
         }
         for(int i = name.length(); i < 16; i++) mvprintw(20, 62 + i, "_");
-        refresh(), usleep(50);
+        refresh(), usleep(50000);
     }
     player = new warrior(name, 1000, 10, 10, 0); player->mod("last", -1);
     erase(); box(stdscr, '|', '-');

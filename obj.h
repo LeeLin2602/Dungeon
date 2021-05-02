@@ -24,9 +24,9 @@ public:
 
 class monster: public object {
 public:
-	int hp, atk, dfs, reward;
+	int hp, atk, dfs, reward, script;
 	monster(){}
-	monster(string n, int h, int a, int d, int r): hp(h), atk(a), dfs(d), reward(r) { name = n, type = 1, valid = 1;}
+	monster(string n, int h, int a, int d, int r, int sc): hp(h), atk(a), dfs(d), reward(r), script(sc) { name = n, type = 1, valid = 1;}
 	void trigger(void *Game);
 	vector<string> render();
 private:

@@ -37,16 +37,8 @@ void clear_event(queue<pii> &events);
 vector<string> readFile(string path, string path2 = "");
 
 class game {
-private:
-    pthread_t keyboard_detector;
-    int scr_row, scr_col;
-    const int stc = 32;
-    string message;
+protected:
     grapher Grapher;
-    vector<room> gameMap;
-    vector<monster*> gameMonsters;
-    vector<props*> gameProps;
-    vector<npc*> gameNPC;
 public:
     queue<pii> events;
     room* cur;
@@ -63,7 +55,18 @@ public:
     void draw(int info = 1, int prompt = 1, int main = 1, int doViewBag = -1, int doRefresh = 1);
     void print_prompt(string x);
     void show_info(vector<string> content);
+
+    friend class monster;
 private:
+    pthread_t keyboard_detector;
+    int scr_row, scr_col;
+    const int stc = 32;
+    string message;
+    vector<room> gameMap;
+    vector<monster*> gameMonsters;
+    vector<props*> gameProps;
+    vector<npc*> gameNPC;
+
     inline void g_split();
     inline void g_status();
     inline void g_info();
